@@ -3,12 +3,12 @@
  */
 import { inject as service } from '@ember/service';
 
-import $ from 'jquery';
 import Mixin from '@ember/object/mixin';
 import { htmlSafe } from '@ember/string';
 import { computed } from '@ember/object';
 import { run } from '@ember/runloop';
 import { nextTick, computeTimeout } from 'ember-css-transitions/mixins/transition-mixin';
+import { getOwner } from '@ember/application';
 
 /**
  * @class Translate3dMixin
@@ -73,22 +73,36 @@ export default Mixin.create({
    */
   willDestroyElement() {
     this._super(...arguments);
+  
+    let config = getOwner(this).resolveRegistration('config:environment');
 
-    let containerClone = this.$().parent().clone();
-    let dialogClone = containerClone.find('md-dialog');
-    $(this.get('defaultedParent')).parent().append(containerClone);
+    let containerClone = this.element.parentElement.cloneNode(true);
+    let dialogClone = containerClone.querySelector('md-dialog');
+    
+    let parent = this.get('defaultedParent');
+    
+    if (config.environment === 'test' && !this.get('parent')) {
+      parent = '#ember-testing';
+    }
 
+    document.querySelector(parent).parentElement.appendChild(containerClone);
+    
     let toStyle = this.toTransformCss(this.calculateZoomToOrigin(this.element, this.get('defaultedCloseTo')));
 
+    let origin = typeof this.get('origin') === "string"
+                    ? document.querySelector(this.get('origin'))
+                    : this.get('origin');
+
     nextTick().then(() => {
-      dialogClone.removeClass('md-transition-in');
-      dialogClone.addClass('md-transition-out');
-      dialogClone.attr('style', toStyle);
+      dialogClone.classList.remove('md-transition-in')
+      dialogClone.classList.add('md-transition-out');
+      dialogClone.style.cssText = toStyle;
       nextTick().then(() => {
         run.later(() => {
-          containerClone.remove();
-          this.onTranslateToEnd($(this.get('origin')));
-        }, computeTimeout(dialogClone.get(0)) || 0);
+          containerClone.parentNode.removeChild(containerClone);
+          this.onTranslateToEnd(origin);
+
+        }, computeTimeout(dialogClone) || 0);
       });
     });
   },
@@ -106,9 +120,10 @@ export default Mixin.create({
    */
   calculateZoomToOrigin(element, originator) {
     let zoomStyle;
-
+    originator = typeof originator === "string"
+                    ? document.querySelector(originator)
+                    : originator;
     if (originator) {
-      originator = $(originator).get(0);
       let originBnds = this.copyRect(originator.getBoundingClientRect());
       let dialogRect = this.copyRect(element.getBoundingClientRect());
       let dialogCenterPt = this.centerPointFor(dialogRect);
@@ -173,7 +188,7 @@ export default Mixin.create({
    * @public
    */
   clientRect(element) {
-    let bounds = $(element)[0].getBoundingClientRect();
+    let bounds = document.querySelector(element).getBoundingClientRect();
 
     // If the event origin element has zero size, it has probably been hidden.
     return bounds && (bounds.width > 0) && (bounds.height > 0) ? this.copyRect(bounds) : null;
