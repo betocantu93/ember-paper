@@ -34,6 +34,7 @@ module.exports = {
     app.import('vendor/hammerjs/hammer.js');
     app.import('vendor/matchmedia-polyfill/matchMedia.js');
     app.import('vendor/propagating-hammerjs/propagating.js');
+    app.import('vendor/element-closest/element-closest.js');
   },
 
   config() {
@@ -91,7 +92,12 @@ module.exports = {
       destDir: 'propagating-hammerjs'
     }));
 
-    trees = trees.concat([hammerJs, matchMediaPolyfill, propagatingHammerJs, versionTree]);
+    let elementClosestPolyfill = fastbootTransform(new Funnel(this.pathBase('element-closest'), {
+      files: ['element-closest.js'],
+      destDir: 'element-closest'
+    }));
+
+    trees = trees.concat([hammerJs, matchMediaPolyfill, propagatingHammerJs, elementClosestPolyfill, versionTree]);
 
     if (tree) {
       trees.push(tree);
