@@ -88,7 +88,7 @@ export default Component.extend(FocusableMixin, RippleMixin, ColorMixin, Proxiab
   },
 
   _setupSwitch() {
-    this.set('switchWidth', this.element.querySelector('.md-thumb-container').innerWidth);
+    this.set('switchWidth', this.element.querySelector('.md-thumb-container').offsetWidth);
 
     let switchContainer = this.element.querySelector('.md-container');
     let switchHammer = new Hammer(switchContainer);
@@ -107,8 +107,8 @@ export default Component.extend(FocusableMixin, RippleMixin, ColorMixin, Proxiab
     this._onClickHandleNativeClick = run.bind(this, this._handleNativeClick);
 
     this.element.querySelector('.md-container')
-      .addEventListener('click', this._onClickHandleNativeClick)
-    
+      .addEventListener('click', this._onClickHandleNativeClick);
+
   },
 
   _handleNativeClick() {
@@ -120,6 +120,9 @@ export default Component.extend(FocusableMixin, RippleMixin, ColorMixin, Proxiab
       this._switchContainerHammer.destroy();
       this._switchHammer.destroy();
     }
+    this.element.querySelector('.md-container')
+      .removeEventListener('click', this._onClickHandleNativeClick)
+    this._onClickHandleNativeClick = null;
   },
 
   _dragStart() {
