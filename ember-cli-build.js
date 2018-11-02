@@ -2,11 +2,24 @@
 const EmberAddon = require('ember-cli/lib/broccoli/ember-addon');
 
 module.exports = function(defaults) {
-  let app = new EmberAddon(defaults, {
-    // Add options here
+
+  let options = {
     snippetPaths: ['tests/dummy/snippets'],
     snippetSearchPaths: ['tests/dummy/app']
-  });
+  };
+  
+  /* Lines borrowed from ember-bootstrap https://github.com/kaliber5/ember-bootstrap/blob/master/ember-cli-build.js */
+  try {
+    let emberVersion = require('ember-source/package.json').version;
+
+    if (defaults.project.findAddonByName('ember-native-dom-event-dispatcher') || emberVersion.match(/^[\^~]?3.\d+.\d+.*$/)) {
+      options.vendorFiles = { 'jquery.js': null };
+    }
+  } catch (e) {
+    // test with jQuery
+  }
+
+  let app = new EmberAddon(defaults, options);
 
   /*
     This build file specifies the options for the dummy test app of this
